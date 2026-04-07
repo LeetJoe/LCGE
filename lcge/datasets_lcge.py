@@ -17,8 +17,11 @@ from models_lcge import TKBCModel
 DATA_PATH = pkg_resources.resource_filename('lcge', 'data/')
 
 class TemporalDataset(object):
-    def __init__(self, name: str):
-        self.root = Path(DATA_PATH) / name
+    def __init__(self, name, data_path = ''):
+        if data_path != '':
+            self.root = Path(data_path)
+        else:
+            self.root = Path(DATA_PATH) / name
 
         self.data = {}
         for f in ['train', 'test', 'valid']:
