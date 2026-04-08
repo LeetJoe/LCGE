@@ -79,11 +79,7 @@ parser.add_argument(
     help="Data path for load & save (experiment path)"
 )
 parser.add_argument(
-    '--iter', default=0, type=int,
-    help="Iteration number"
-)
-parser.add_argument(
-    '--use_init_rules', default=False, action='store_true',
+    '--rule_path', default='./src_data/rulelearning/', type=str,
     help="Use provided rules or not"
 )
 
@@ -93,10 +89,7 @@ args = parser.parse_args()
 log_file = open(os.path.join(args.data_path, './run.log'), 'a')
 log_file.write('\n\n\nStart: {}\n'.format(datetime.datetime.now()))
 
-if args.use_init_rules:
-    rule_path = os.path.join(args.data_path, "rulelearning/")
-else:
-    rule_path = os.path.join(args.data_path, str(args.iter) + '/kge/rulelearning/')
+rule_path = args.rule_path
 
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
 
