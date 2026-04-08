@@ -19,6 +19,10 @@ import sys
 from regularizers_rule import RuleSim
 import json
 
+# todo 暂保留，最后再删除
+import datetime
+log_file = open('./run.log', 'a')
+log_file.write('\n\n\nStart: {}\n'.format(datetime.datetime.now()))
 
 parser = argparse.ArgumentParser(
     description="Logic and Commonsense-Guided Temporal KGE"
@@ -306,3 +310,8 @@ with open('./annotation.txt', 'w') as fw:
     fw.close()
 
 print("LCGE done.\n")
+
+
+# todo 暂保留，最后再删除
+log_file.write('End: {}\n'.format(datetime.datetime.now()))
+log_file.close()
