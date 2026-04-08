@@ -24,7 +24,7 @@ class TemporalDataset(object):
             self.root = Path(DATA_PATH) / name
 
         self.data = {}
-        for f in ['train', 'test', 'valid']:
+        for f in ['train', 'test', 'valid', 'infer']:
             in_file = open(str(self.root / (f + '.pickle')), 'rb')
             self.data[f] = pickle.load(in_file)
 
@@ -83,6 +83,14 @@ class TemporalDataset(object):
         copy[:, 2] = tmp
         copy[:, 1] += self.n_predicates // 2  # has been multiplied by two.
         return np.vstack((self.data['train'], copy))
+
+    def get_reversed(self, split: str):
+        copy = np.copy(self.data[split])
+        tmp = np.copy(copy[:, 0])
+        copy[:, 0] = copy[:, 2]
+        copy[:, 2] = tmp
+        copy[:, 1] += self.n_predicates // 2  # has been multiplied by two.
+        return copy
 
     def eval(
             self, model: TKBCModel, split: str, n_queries: int = -1, missing_eval: str = 'both',
