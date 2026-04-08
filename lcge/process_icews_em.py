@@ -981,7 +981,7 @@ def prepare_dataset(data_path):
         ff.close()
 
     # map train/test/valid with the ids
-    for f in files:
+    for f in files + ['infer']:
         file_path = os.path.join(data_path, f)
         to_read = open(file_path, 'r')
         examples = []
@@ -1037,6 +1037,15 @@ def prepare_dataset(data_path):
 if __name__ == "__main__":
     args = parse_args()
 
+    # merge found into train
+    with open(os.path.join(args.data_path, 'train'), 'a') as fa:
+        with open(os.path.join(args.data_path, 'found'), 'r') as fr:
+            for line in fr.readlines():
+                fa.write(line)
+            fr.close()
+        fa.close()
+
+
     """
     # generate static rules
     static_graph(args.data_path, args.iter)
@@ -1053,10 +1062,10 @@ if __name__ == "__main__":
 
     # reform rule
     reform_static_rule(args.data_path, args.iter)
-    """
     learn_temporal_rule(args.data_path, args.iter)
+    """
 
     # prepare
-    # prepare_dataset(args.data_path)
+    prepare_dataset(args.data_path)
 
 
