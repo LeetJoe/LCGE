@@ -86,9 +86,6 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-log_file = open(os.path.join(args.data_path, './run.log'), 'a')
-log_file.write('\n\n\nStart: {}\n'.format(datetime.datetime.now()))
-
 rule_path = args.rule_path
 
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
@@ -224,6 +221,3 @@ for epoch in range(args.max_epochs):
 
 print("The best test mrr is:\t", best_mrr)
 print("The best test hits@1,3,10 are:\t", best_hit)
-
-log_file.write('End: {}\n'.format(datetime.datetime.now()))
-log_file.close()
