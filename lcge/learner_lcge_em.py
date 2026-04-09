@@ -222,7 +222,7 @@ for epoch in range(args.max_epochs):
                 early_stopping = 0
             else:
                 early_stopping += 1
-            if early_stopping > 10:
+            if early_stopping > 50:
                 print("early stopping!")
                 break
 
