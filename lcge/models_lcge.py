@@ -89,6 +89,81 @@ class TKBCModel(nn.Module, ABC):
                 c_begin += chunk_size
         return ranks
 
+
+    def get_ranking_em(
+            self, queries: torch.Tensor,
+            filters: Dict[Tuple[int, int, int], List[int]],
+            mln_scores: Dict[Tuple[int, int, int, int], Dict[int, float]],
+            batch_size: int = 1000, chunk_size: int = -1
+    ):
+        """
+        Returns filtered ranking for each queries.
+        :param queries: a torch.LongTensor of quadruples (lhs, rel, rhs, timestamp)
+        :param filters: filters[(lhs, rel, ts)] gives the elements to filter from ranking
+        :param batch_size: maximum number of queries processed at once
+        :param chunk_size: maximum number of candidates processed at once
+        :return:
+        """
+
+        def merge_score(kge_score, mln_score):
+            lmda = -np.cos(0.3 * mln_score) + 1
+            use_score = kge_score * (1 - lmda) + mln_score * lmda
+            return use_score
+
+        if chunk_size < 0:
+            chunk_size = self.sizes[2]
+        ranks = torch.ones(len(queries))
+        with torch.no_grad():
+            c_begin = 0
+            while c_begin < self.sizes[2]:
+                b_begin = 0
+                rhs = self.get_rhs(c_begin, chunk_size)
+                while b_begin < len(queries):
+                    these_queries = queries[b_begin:b_begin + batch_size]
+                    q = self.get_queries(these_queries)
+
+                    #scores = q[0] @ rhs + 0.1 * q[1] @ self.get_rhs_static(c_begin, chunk_size)
+                    #targets = self.score(these_queries)
+                    scores_tem = q[0] @ rhs
+                    scores_cs =  q[1] @ self.get_rhs_static(c_begin, chunk_size)
+                    targets_tem, targets_cs = self.score(these_queries)
+                    #print("scores_cs:\n{}\n\ntargets_cs:\n{}\n".format(scores_cs, targets_cs))
+
+                    #assert not torch.any(torch.isinf(scores)), "inf scores"
+                    #assert not torch.any(torch.isnan(scores)), "nan scores"
+                    #assert not torch.any(torch.isinf(targets)), "inf targets"
+                    #assert not torch.any(torch.isnan(targets)), "nan targets"
+
+                    # set filtered and true scores to -1e6 to be ignored
+                    # take care that scores are chunked
+                    for i, query in enumerate(these_queries):
+                        # merge scores from mln todo use baselines?
+                        if (query[0].item(), query[1].item(), query[2].item(), query[3].item()) in mln_scores:
+                            for cand, mln_score in mln_scores[(query[0].item(), query[1].item(), query[2].item(), query[3].item())].items():
+                                scores_tem[i][cand] = merge_score(scores_tem[i][cand], mln_score)
+                                scores_cs[i][cand] = merge_score(scores_cs[i][cand], mln_score)
+                                if cand == query[3].item():
+                                    targets_tem[i] = merge_score(targets_tem[i], mln_score)
+
+                        filter_out = filters[(query[0].item(), query[1].item(), query[3].item())]
+                        filter_out += [queries[b_begin + i, 2].item()]
+                        if chunk_size < self.sizes[2]:
+                            filter_in_chunk = [
+                                int(x - c_begin) for x in filter_out
+                                if c_begin <= x < c_begin + chunk_size
+                            ]
+                            scores_tem[i, torch.LongTensor(filter_in_chunk)] = -1e6
+                        else:
+                            scores_tem[i, torch.LongTensor(filter_out)] = -1e6
+                    ranks[b_begin:b_begin + batch_size] += torch.sum(
+                        (torch.mul(scores_tem >= targets_tem, scores_cs > targets_cs)).float(), dim=1
+                    ).cpu()
+
+                    b_begin += batch_size
+
+                c_begin += chunk_size
+        return ranks
+
     def get_auc(
             self, queries: torch.Tensor, batch_size: int = 1000
     ):
