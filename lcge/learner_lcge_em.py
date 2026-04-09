@@ -142,7 +142,9 @@ f.close()
 rules = (rule1_p1, rule1_p2, rule2_p1, rule2_p2, rule2_p3, rule2_p4)
 
 sizes = dataset.get_shape()
-print("sizes of dataset is:\t", sizes)
+print("Dimensionsdim of dataset is:\t", sizes)
+print("Amount of dataset is:\t", dataset.get_amount())
+
 model = {
     'LCGE': LCGE(sizes, args.rank, rules, args.weight_static, no_time_emb=args.no_time_emb),
 }[args.model]

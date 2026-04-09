@@ -314,3 +314,7 @@ class TemporalDataset(object):
     def get_shape(self):
         return self.n_entities, self.n_predicates, self.n_entities, self.n_timestamps
 
+
+    def get_amount(self):
+        return self.data['train'].shape[0], self.data['valid'].shape[0], self.data['test'].shape[0]
+
