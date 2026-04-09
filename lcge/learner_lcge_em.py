@@ -22,13 +22,13 @@ import json
 # todo 暂保留，最后再删除
 import datetime
 log_file = open('./run.log', 'a')
-log_file.write('\n\n\nStart: {}\n'.format(datetime.datetime.now()))
+log_file.write('\n\n\nLearn start: {}\n'.format(datetime.datetime.now()))
 
 parser = argparse.ArgumentParser(
     description="Logic and Commonsense-Guided Temporal KGE"
 )
 parser.add_argument(
-    '--dataset', type=str,
+    '--dataset', type=str, default='',
     help="Dataset name"
 )
 models = [
@@ -83,14 +83,20 @@ parser.add_argument(
     help="Data path for load & save (experiment path)"
 )
 parser.add_argument(
-    '--rule_path', default='./src_data/rulelearning/', type=str,
-    help="Use provided rules or not"
+    '--exp_folder', default='lcge_main', type=str,
+    help="Experiment folder for saving data"
+)
+parser.add_argument(
+    '--iter', default=0, type=int,
+    help="Iteration number of EM"
 )
 
 
 args = parser.parse_args()
 
-rule_path = args.rule_path
+exp_path = os.path.join(args.data_path, args.exp_folder)
+kge_path = os.path.join(str(exp_path), str(args.iter), 'kge')
+rule_path = os.path.join(str(exp_path), 'rulelearning')
 
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
 
@@ -216,7 +222,7 @@ for epoch in range(args.max_epochs):
 
             print("test hits@n:\t", test['hits@[1,3,10]'])
             if test['MRR'] > best_mrr:
-                torch.save(model, './whole_model.pth')
+                torch.save(model, os.path.join(kge_path, 'checkpoint_best.pt'))
                 best_mrr = test['MRR']
                 best_hit = test['hits@[1,3,10]']
                 early_stopping = 0
@@ -230,90 +236,6 @@ if args.max_epochs > 0:
     print("The best test mrr is:\t", best_mrr)
     print("The best test hits@1,3,10 are:\t", best_hit)
 
-print("Saving scores of test & infer...\n")
-
-sigmoid_factor = 10
-model = torch.load('./whole_model.pth')
-model.eval()
-
-# save test scores
-test_size = len(dataset.data['test'])
-data_test = dataset.data['test']
-data_test_reverse = dataset.get_reversed('test')
-test = torch.from_numpy(data_test.astype('int64')).cuda()
-test_reverse = torch.from_numpy(data_test_reverse.astype('int64')).cuda()
-queries = model.get_queries(test)
-queries_reverse = model.get_queries(test_reverse)
-rhs = model.get_rhs(0, dataset.n_entities)
-rhs_static = model.get_rhs_static(0, dataset.n_entities)
-scores_tem = torch.sigmoid((queries[0] @ rhs) / sigmoid_factor)
-scores_cs = torch.sigmoid((queries[1] @ rhs_static) / sigmoid_factor)
-scores_tem_reverse = torch.sigmoid((queries_reverse[0] @ rhs) / sigmoid_factor)
-scores_cs_reverse = torch.sigmoid((queries_reverse[1] @ rhs_static) / sigmoid_factor)
-ranks = model.get_ranking(test, dataset.to_skip['rhs'], batch_size=500)
-ranks_reverse = model.get_ranking(test_reverse, dataset.to_skip['lhs'], batch_size=500)
-
-file_buff = ''
-with open('./pred_kge.txt', 'w') as fw:
-    for i in range(test_size):
-        score_dict_tem = {j: scores_tem[i][j].item() for j in range(len(scores_tem[i]))}
-        scorelist_tem = [str(a) + '*{:.6f}'.format(b) for (a, b) in
-                    sorted(score_dict_tem.items(), key=lambda x: x[1], reverse=True)]
-        score_dict_cs = {j: scores_cs[i][j].item() for j in range(len(scores_cs[i]))}
-        scorelist_cs = [str(a) + '*{:.6f}'.format(b) for (a, b) in
-                    sorted(score_dict_cs.items(), key=lambda x: x[1], reverse=True)]
-        # fw.write('{}\t{}\t{}\t{}\tsp\t{}\n{}\n{}\n'.format(*data_test[i], int(ranks[i].item()), ';'.join(scorelist_tem), ';'.join(scorelist_cs)))
-        file_buff += '{}\t{}\t{}\t{}\tsp\t{}\n{}\n{}\n'.format(*data_test[i], int(ranks[i].item()), ';'.join(scorelist_tem), ';'.join(scorelist_cs))
-
-        score_dict_tem = {j: scores_tem_reverse[i][j].item() for j in range(len(scores_tem_reverse[i]))}
-        scorelist_tem = [str(a) + '*{:.6f}'.format(b) for (a, b) in
-                    sorted(score_dict_tem.items(), key=lambda x: x[1], reverse=True)]
-        score_dict_cs = {j: scores_cs_reverse[i][j].item() for j in range(len(scores_cs_reverse[i]))}
-        scorelist_cs = [str(a) + '*{:.6f}'.format(b) for (a, b) in
-                    sorted(score_dict_cs.items(), key=lambda x: x[1], reverse=True)]
-
-        # fw.write('{}\t{}\t{}\t{}\tpo\t{}\n{}\n'.format(*data_test_reverse[i], int(ranks_reverse[i].item()), ';'.join(scorelist_tem), ';'.join(scorelist_cs)))
-        file_buff += '{}\t{}\t{}\t{}\tpo\t{}\n{}\n'.format(*data_test_reverse[i], int(ranks_reverse[i].item()), ';'.join(scorelist_tem), ';'.join(scorelist_cs))
-        if (i + 1) % 100 == 0:
-            fw.write(file_buff)
-            file_buff = ''
-    if file_buff != '':
-        fw.write(file_buff)
-        file_buff = ''
-    fw.close()
-
-# save infer scores
-infer_size = len(dataset.data['infer'])
-data_infer = dataset.data['infer']
-data_infer_reverse = dataset.get_reversed('infer')
-infer = torch.from_numpy(data_infer.astype('int64')).cuda()
-infer_reverse = torch.from_numpy(data_infer_reverse.astype('int64')).cuda()
-targets_tem, targets_cs = model.score(infer)
-targets_tem = torch.sigmoid(targets_tem / sigmoid_factor)
-targets_cs = torch.sigmoid(targets_cs / sigmoid_factor)
-targets_tem_reverse, targets_cs_reverse = model.score(infer_reverse)
-targets_tem_reverse = torch.sigmoid(targets_tem_reverse / sigmoid_factor)
-targets_cs_reverse = torch.sigmoid(targets_cs_reverse / sigmoid_factor)
-
-with open('./annotation.txt', 'w') as fw:
-    for i in range(infer_size):
-        # fw.write('{}\t{}\t{}\t{}\tsp\t{:.f8}\t{:.f8}\n'.format(*data_infer[i], targets_tem[i].item(), targets_cs[i].item()))
-        # fw.write('{}\t{}\t{}\t{}\tpo\t{:.f8}\t{:.f8}\n'.format(*data_infer[i], targets_tem_reverse[i].item(), targets_cs_reverse[i].item()))
-
-        file_buff += '{}\t{}\t{}\t{}\tsp\t{:.8f}\t{:.8f}\n'.format(*data_infer[i], targets_tem[i].item(), targets_cs[i].item())
-        file_buff += '{}\t{}\t{}\t{}\tpo\t{:.8f}\t{:.8f}\n'.format(*data_infer[i], targets_tem_reverse[i].item(), targets_cs_reverse[i].item())
-
-        if (i + 1) % 500 == 0:
-            fw.write(file_buff)
-            file_buff = ''
-    if file_buff != '':
-        fw.write(file_buff)
-        file_buff = ''
-    fw.close()
-
-print("LCGE done.\n")
-
-
 # todo 暂保留，最后再删除
-log_file.write('End: {}\n'.format(datetime.datetime.now()))
+log_file.write('Learn end: {}\n'.format(datetime.datetime.now()))
 log_file.close()
