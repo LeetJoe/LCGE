@@ -159,7 +159,7 @@ with open(os.path.join(str(exp_path), str(args.iter), 'ranks.txt'), 'w') as fw:
 
         for j in range(i, i_end):
             file_buff += '{}\tsp\t{}\t{}\n'.format(tuple(data_test[j]), int(ranks[j - i]), int(ranks_em[j - i]))
-            file_buff += '{}\tpo\t{}\t{}\n'.format(tuple(data_test_reverse[j]), int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
+            file_buff += '{}\tpo\t{}\t{}\n'.format(tuple(data_test[j]), int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
 
             mr['rhs'] += int(ranks[j - i])
             mr['lhs'] += int(ranks[j - i])
