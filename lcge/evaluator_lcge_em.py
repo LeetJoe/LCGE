@@ -68,9 +68,6 @@ def load_pred_mln(pred_file, relation_size):
     return test_pred
 
 
-log_file = open('./run.log', 'a')
-log_file.write('\n\n\nEvaluation start: {}\n'.format(datetime.datetime.now()))
-
 parser = argparse.ArgumentParser(
     description="Logic and Commonsense-Guided Temporal KGE"
 )
@@ -97,6 +94,9 @@ exp_path = os.path.join(args.data_path, args.exp_folder)
 kge_path = os.path.join(str(exp_path), str(args.iter), 'kge')
 mln_path = os.path.join(str(exp_path), str(args.iter), 'mln')
 rule_path = os.path.join(str(exp_path), 'rulelearning')
+
+log_file = open(os.path.join(kge_path, 'run.log', 'a'))
+log_file.write('[{}]Evaluation start: {}\n'.format(args.iter, datetime.datetime.now()))
 
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
 
@@ -162,14 +162,14 @@ with open(os.path.join(str(exp_path), str(args.iter), 'ranks.txt'), 'w') as fw:
             file_buff += '{}\tpo\t{}\t{}\n'.format(tuple(data_test[j]), int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
 
             mr['rhs'] += int(ranks[j - i])
-            mr['lhs'] += int(ranks[j - i])
+            mr['lhs'] += int(ranks_reverse[j - i])
             mr_em['rhs'] += int(ranks_em[j - i])
-            mr_em['lhs'] += int(ranks_em[j - i])
+            mr_em['lhs'] += int(ranks_reverse_em[j - i])
 
             mrr['rhs'] += 1 / int(ranks[j - i])
-            mrr['lhs'] += 1 / int(ranks[j - i])
+            mrr['lhs'] += 1 / int(ranks_reverse[j - i])
             mrr_em['rhs'] += 1 / int(ranks_em[j - i])
-            mrr_em['lhs'] += 1 / int(ranks_em[j - i])
+            mrr_em['lhs'] += 1 / int(ranks_reverse_em[j - i])
 
             if int(ranks[j - i]) <= 1:
                 hits['rhs'][1] += 1
@@ -239,7 +239,5 @@ with open(os.path.join(str(exp_path), str(args.iter), 'result_em.txt'), 'w') as 
 
 print("LCGE evaluation done.\n")
 
-
-# todo 暂保留，最后再删除
-log_file.write('Evaluation end: {}\n'.format(datetime.datetime.now()))
+log_file.write('[{}]Evaluation end: {}\n'.format(args.iter, datetime.datetime.now()))
 log_file.close()
