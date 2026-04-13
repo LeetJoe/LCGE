@@ -19,11 +19,6 @@ import sys
 from regularizers_rule import RuleSim
 import json
 
-# todo 暂保留，最后再删除
-import datetime
-log_file = open('./run.log', 'a')
-log_file.write('\n\n\nLearn start: {}\n'.format(datetime.datetime.now()))
-
 parser = argparse.ArgumentParser(
     description="Logic and Commonsense-Guided Temporal KGE"
 )
@@ -98,6 +93,9 @@ exp_path = os.path.join(args.data_path, args.exp_folder)
 kge_path = os.path.join(str(exp_path), str(args.iter), 'kge')
 rule_path = os.path.join(str(exp_path), 'rulelearning')
 
+log_file = open(os.path.join(kge_path, 'run.log', 'a'))
+log_file.write('[{}]Learn start: {}\n'.format(args.iter, datetime.datetime.now()))
+
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
 
 with open(rule_path + "/rule1_p1.json", 'r') as load_rule1_p1:
@@ -148,8 +146,8 @@ f.close()
 rules = (rule1_p1, rule1_p2, rule2_p1, rule2_p2, rule2_p3, rule2_p4)
 
 sizes = dataset.get_shape()
-print("Dimensionsdim of dataset is:\t", sizes)
-print("Amount of dataset is:\t", dataset.get_amount())
+log_file.write("[{}]Dimensionsdim of dataset is:{}\n".format(args.iter, sizes))
+log_file.write("[{}]Amount of dataset is:{}\n".format(args.iter, dataset.get_amount()))
 
 model = {
     'LCGE': LCGE(sizes, args.rank, rules, args.weight_static, no_time_emb=args.no_time_emb),
@@ -232,10 +230,8 @@ for epoch in range(args.max_epochs):
                 print("early stopping!")
                 break
 
-if args.max_epochs > 0:
-    print("The best test mrr is:\t", best_mrr)
-    print("The best test hits@1,3,10 are:\t", best_hit)
+log_file.write("[{}]The best test mrr is:\n".format(args.iter, best_mrr))
+log_file.write("[{}]The best test hits@1,3,10 are:\n".format(args.iter, best_hit))
 
-# todo 暂保留，最后再删除
-log_file.write('Learn end: {}\n'.format(datetime.datetime.now()))
+log_file.write('[{}]Learn end: {}\n'.format(args.iter, datetime.datetime.now()))
 log_file.close()
