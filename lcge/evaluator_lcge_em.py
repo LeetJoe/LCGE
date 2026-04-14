@@ -95,7 +95,7 @@ kge_path = os.path.join(str(exp_path), str(args.iter), 'kge')
 mln_path = os.path.join(str(exp_path), str(args.iter), 'mln')
 rule_path = os.path.join(str(exp_path), 'rulelearning')
 
-log_file = open(os.path.join(kge_path, 'run.log', 'a'))
+log_file = open(os.path.join(kge_path, 'run.log'), 'a')
 log_file.write('[{}]Evaluation start: {}\n'.format(args.iter, datetime.datetime.now()))
 
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
@@ -158,8 +158,8 @@ with open(os.path.join(str(exp_path), str(args.iter), 'ranks.txt'), 'w') as fw:
         ranks_reverse_em = model.get_ranking_em(test_reverse, dataset.to_skip['lhs'], mln_scores['lhs'], batch_size=500)
 
         for j in range(i, i_end):
-            file_buff += '{}\tsp\t{}\t{}\n'.format(tuple(data_test[j]), int(ranks[j - i]), int(ranks_em[j - i]))
-            file_buff += '{}\tpo\t{}\t{}\n'.format(tuple(data_test[j]), int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
+            file_buff += '{}\tsp\t{}\t{}\n'.format(','.split(data_test[j]), int(ranks[j - i]), int(ranks_em[j - i]))
+            file_buff += '{}\tpo\t{}\t{}\n'.format(','.split(data_test[j]), int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
 
             mr['rhs'] += int(ranks[j - i])
             mr['lhs'] += int(ranks_reverse[j - i])

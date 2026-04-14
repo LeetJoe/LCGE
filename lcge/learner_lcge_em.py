@@ -93,7 +93,7 @@ exp_path = os.path.join(args.data_path, args.exp_folder)
 kge_path = os.path.join(str(exp_path), str(args.iter), 'kge')
 rule_path = os.path.join(str(exp_path), 'rulelearning')
 
-log_file = open(os.path.join(kge_path, 'run.log', 'a'))
+log_file = open(os.path.join(kge_path, 'run.log'), 'a')
 log_file.write('[{}]Learn start: {}\n'.format(args.iter, datetime.datetime.now()))
 
 dataset = TemporalDataset(args.dataset, data_path=args.data_path)
@@ -230,8 +230,8 @@ for epoch in range(args.max_epochs):
                 print("early stopping!")
                 break
 
-log_file.write("[{}]The best test mrr is:\n".format(args.iter, best_mrr))
-log_file.write("[{}]The best test hits@1,3,10 are:\n".format(args.iter, best_hit))
+log_file.write("[{}]The best test mrr is: {}\n".format(args.iter, best_mrr))
+log_file.write("[{}]The best test hits@1,3,10 are: {}\n".format(args.iter, best_hit))
 
 log_file.write('[{}]Learn end: {}\n'.format(args.iter, datetime.datetime.now()))
 log_file.close()
