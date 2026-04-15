@@ -158,8 +158,8 @@ with open(os.path.join(str(exp_path), str(args.iter), 'ranks.txt'), 'w') as fw:
         ranks_reverse_em = model.get_ranking_em(test_reverse, dataset.to_skip['lhs'], mln_scores['lhs'], batch_size=500)
 
         for j in range(i, i_end):
-            file_buff += '{}\tsp\t{}\t{}\n'.format(','.split(data_test[j]), int(ranks[j - i]), int(ranks_em[j - i]))
-            file_buff += '{}\tpo\t{}\t{}\n'.format(','.split(data_test[j]), int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
+            file_buff += '{}\tsp\t{}\t{}\n'.format(str(list(data_test[j]))[1:-1], int(ranks[j - i]), int(ranks_em[j - i]))
+            file_buff += '{}\tpo\t{}\t{}\n'.format(str(list(data_test[j]))[1:-1], int(ranks_reverse[j - i]), int(ranks_reverse_em[j - i]))
 
             mr['rhs'] += int(ranks[j - i])
             mr['lhs'] += int(ranks_reverse[j - i])
