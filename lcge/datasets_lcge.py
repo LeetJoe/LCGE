@@ -316,5 +316,5 @@ class TemporalDataset(object):
 
 
     def get_amount(self):
-        return self.data['train'].shape[0], self.data['valid'].shape[0], self.data['test'].shape[0]
+        return self.data['train'].shape[0], self.data['valid'].shape[0], self.data['test'].shape[0], self.data['infer'].shape[0]
 
