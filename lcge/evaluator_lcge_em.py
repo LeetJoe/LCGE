@@ -93,7 +93,6 @@ args = parser.parse_args()
 exp_path = os.path.join(args.data_path, args.exp_folder)
 kge_path = os.path.join(str(exp_path), str(args.iter), 'kge')
 mln_path = os.path.join(str(exp_path), str(args.iter), 'mln')
-rule_path = os.path.join(str(exp_path), 'rulelearning')
 
 log_file = open(os.path.join(kge_path, 'run.log'), 'a')
 log_file.write('[{}]Evaluation start: {}\n'.format(args.iter, datetime.datetime.now()))

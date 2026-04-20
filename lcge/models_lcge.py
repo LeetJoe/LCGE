@@ -455,7 +455,9 @@ class LCGE(TKBCModel):
                     rule += weight_r * (torch.sum(torch.abs(rel1_split[0] - rtt[0]) ** 3) + torch.sum(torch.abs(rel1_split[1] - rtt[1]) ** 3))
                     rule_num += 1
 
-        rule = rule / rule_num
+        if rule_num != 0:
+            rule = rule / rule_num
+
         return (
                (lhs[0] * full_rel[0] - lhs[1] * full_rel[1]) @ right[0].t() +
                (lhs[1] * full_rel[0] + lhs[0] * full_rel[1]) @ right[1].t(),
